@@ -1115,6 +1115,7 @@ function switchTab(name) {
 
       showStatus('Done! Created ' + totalSheets + ' sheet(s) from ' + supported.length + ' file(s).', 'success');
       btnDownload.classList.add('visible');
+      btnDownload.style.display = 'flex';
       resetLink.style.display = 'flex';
 
     } catch (err) {
@@ -1123,10 +1124,8 @@ function switchTab(name) {
     }
   }
 
-  // ── Copy one ExcelJS worksheet (values, styles, merges, sizes, notes) ─────
+  // ── Copy one ExcelJS worksheet (values, styles, merges, sizes) ─────
   function copySheet(src, dst) {
-    dst.views     = (src.views || []).map(v => Object.assign({}, v, { activeCell: undefined, selection: undefined }));
-    dst.pageSetup = Object.assign({}, src.pageSetup);
     dst.properties.defaultRowHeight = src.properties.defaultRowHeight;
     if (src.columns) {
       src.columns.forEach((c, i) => {
@@ -1161,9 +1160,6 @@ function switchTab(name) {
         }
         if (cell.style) {
           d.style = JSON.parse(JSON.stringify(cell.style));
-        }
-        if (cell.note) {
-          d.note = JSON.parse(JSON.stringify(cell.note));
         }
       });
     });
