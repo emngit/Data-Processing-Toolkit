@@ -1142,11 +1142,11 @@ function switchTab(name) {
         const d = dRow.getCell(c);
         if (cell.type !== ExcelJS.ValueType.Merge) {
           let val = cell.value;
-          if (val && typeof val === 'object') {
-            if (val.formula) {
-              // Convert shared formulas to individual formula definitions to prevent cross-worksheet corruption
-              val = { formula: val.formula, result: val.result };
-            } else if (val.richText) {
+          if (cell.type === ExcelJS.ValueType.Formula) {
+            // Convert all shared and standalone formulas to clean standalone formulas to prevent cross-worksheet corruption
+            val = { formula: cell.formula, result: cell.result };
+          } else if (val && typeof val === 'object') {
+            if (val.richText) {
               val = JSON.parse(JSON.stringify(val));
             } else if (val.hyperlink) {
               val = JSON.parse(JSON.stringify(val));
