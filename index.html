@@ -1125,13 +1125,15 @@ function switchTab(name) {
 
   // ── Copy one ExcelJS worksheet (values, styles, merges, sizes, notes) ─────
   function copySheet(src, dst) {
-    dst.views     = src.views.map(v => Object.assign({}, v, { activeCell: undefined, selection: undefined }));
+    dst.views     = (src.views || []).map(v => Object.assign({}, v, { activeCell: undefined, selection: undefined }));
     dst.pageSetup = Object.assign({}, src.pageSetup);
     dst.properties.defaultRowHeight = src.properties.defaultRowHeight;
-    src.columns.forEach((c, i) => {
-      if (c.width) dst.getColumn(i + 1).width = c.width;
-      if (c.hidden) dst.getColumn(i + 1).hidden = true;
-    });
+    if (src.columns) {
+      src.columns.forEach((c, i) => {
+        if (c.width) dst.getColumn(i + 1).width = c.width;
+        if (c.hidden) dst.getColumn(i + 1).hidden = true;
+      });
+    }
     (src.model.merges || []).forEach(m => dst.mergeCells(m));
     src.eachRow({ includeEmpty: true }, (row, r) => {
       const dRow = dst.getRow(r);
@@ -1139,9 +1141,30 @@ function switchTab(name) {
       if (row.hidden) dRow.hidden = true;
       row.eachCell({ includeEmpty: true }, (cell, c) => {
         const d = dRow.getCell(c);
-        if (cell.type !== ExcelJS.ValueType.Merge) d.value = cell.value;
-        d.style = cell.style;
-        if (cell.note) d.note = cell.note;
+        if (cell.type !== ExcelJS.ValueType.Merge) {
+          let val = cell.value;
+          if (val && typeof val === 'object') {
+            if (val.formula) {
+              // Convert shared formulas to individual formula definitions to prevent cross-worksheet corruption
+              val = { formula: val.formula, result: val.result };
+            } else if (val.richText) {
+              val = JSON.parse(JSON.stringify(val));
+            } else if (val.hyperlink) {
+              val = JSON.parse(JSON.stringify(val));
+            } else if (val instanceof Date) {
+              val = new Date(val.getTime());
+            } else {
+              val = JSON.parse(JSON.stringify(val));
+            }
+          }
+          d.value = val;
+        }
+        if (cell.style) {
+          d.style = JSON.parse(JSON.stringify(cell.style));
+        }
+        if (cell.note) {
+          d.note = JSON.parse(JSON.stringify(cell.note));
+        }
       });
     });
   }
