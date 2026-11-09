@@ -1143,8 +1143,15 @@ function switchTab(name) {
         if (cell.type !== ExcelJS.ValueType.Merge) {
           let val = cell.value;
           if (cell.type === ExcelJS.ValueType.Formula) {
-            // Convert all shared and standalone formulas to clean standalone formulas to prevent cross-worksheet corruption
-            val = { formula: cell.formula, result: cell.result };
+            // Convert all shared and standalone formulas to clean standalone formulas,
+            // and sanitize any invalid Date or NaN results to prevent Excel XML corruption.
+            let result = cell.result;
+            if (result instanceof Date && isNaN(result.getTime())) {
+              result = undefined;
+            } else if (typeof result === 'number' && isNaN(result)) {
+              result = undefined;
+            }
+            val = { formula: cell.formula, result: result };
           } else if (val && typeof val === 'object') {
             if (val.richText) {
               val = JSON.parse(JSON.stringify(val));
