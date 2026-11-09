@@ -1077,15 +1077,16 @@ function switchTab(name) {
         const buf    = await readArrayBuffer(f);
         const srcWb  = new ExcelJS.Workbook();
         await srcWb.xlsx.load(buf);
-        const srcWs  = srcWb.worksheets[0];
-        const tabName = safeSheetName(f.name, usedNames);
-        copySheet(srcWs, outWb.addWorksheet(tabName));
-        const rowCount = srcWs.rowCount;
-        sheetLog.push({
-          name: tabName,
-          desc: 'From: ' + f.name + ' — ' + rowCount.toLocaleString() + ' rows',
-          warn: null
-        });
+        for (const srcWs of srcWb.worksheets) {
+          const tabName = safeSheetName(srcWs.name, usedNames);
+          copySheet(srcWs, outWb.addWorksheet(tabName));
+          const rowCount = srcWs.rowCount;
+          sheetLog.push({
+            name: tabName,
+            desc: 'From: ' + f.name + ' (' + srcWs.name + ') — ' + rowCount.toLocaleString() + ' rows',
+            warn: null
+          });
+        }
       }
 
       const totalSheets = outWb.worksheets.length;
